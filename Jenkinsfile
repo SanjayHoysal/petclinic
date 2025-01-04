@@ -1,5 +1,12 @@
+
+@Library('my-shared-library@main') _  // Correct syntax
+
 pipeline {
-    agent any
+    agent { label 'Node3' }
+    // triggers {
+    //     // Trigger at midnight every day
+    //     cron('*/2 * * * *')
+    // }
 
     environment {
         JAVA_HOME = '/usr/lib/jvm/java-17-openjdk-amd64'
@@ -9,91 +16,91 @@ pipeline {
 
     stages {
         stage('Checkout Code') {
-            steps {
-                echo 'Checking out code...'
-                checkout scm
+            steps { 
+                script {
+                   pipelineAll.checkoutCode()
+               }
             }
         }
 
         stage('Set up Java 17') {
             steps {
-                echo 'Setting up Java 17...'
-                sh 'sudo apt update'
-                sh 'sudo apt install -y openjdk-17-jdk'
+                 script {
+                   pipelineAll.setupJava()
+                 }
             }
         }
 
         stage('Set up Maven') {
             steps {
-                echo 'Setting up Maven...'
-                sh 'sudo apt install -y maven'
+                 script {
+                   pipelineAll.setupMaven()
+                 }
             }
         }
 
         stage('Build with Maven') {
             steps {
-                echo 'Building project with Maven...'
-                sh 'mvn clean package'
+                 script {
+                   pipelineAll.buildProject()
+                 }
             }
         }
-
+        // stage('Configure Git') {
+        //     steps {
+        //         script {
+        //             // Set global Git user.name and user.email
+        //             sh 'git config --global user.name "SanjanaKrishn"'
+        //             sh 'git config --global user.email "sanjanabn6@gmail.com"'
+        //         }
+        //     }
+        // }
+        // stage('Tag Build') {
+        //     steps {
+        //         script {
+        //             def buildTag = "build-${env.BUILD_NUMBER}"
+        //             tagBuild(buildTag, "Tagging build number ${env.BUILD_NUMBER}")
+        //         }
+        //     }
+        // }
         stage('Upload Artifact') {
             steps {
-                echo 'Uploading artifact...'
-                archiveArtifacts artifacts: 'target/simple-parcel-service-app-1.0-SNAPSHOT.jar', allowEmptyArchive: true
+                 script {
+                   pipelineAll.uploadArtifact('target/petclinic-0.0.1-SNAPSHOT.jar')
+                 }
             }
         }
 
         stage('Run Application') {
             steps {
-                echo 'Running Spring Boot application...'
-                sh 'nohup mvn spring-boot:run &'
-                sleep(time: 15, unit: 'SECONDS') // Wait for the application to fully start
-
-                // Fetch the public IP and display the access URL
-                script {
-                    def publicIp = sh(script: "curl -s https://checkip.amazonaws.com", returnStdout: true).trim()
-                    echo "The application is running and accessible at: http://${publicIp}:8080"
-                }
+                 script {
+                   pipelineAll.runApplication()
+                 }
             }
         }
 
         stage('Validate App is Running') {
             steps {
-                echo 'Validating that the app is running...'
-                script {
-                    def response = sh(script: 'curl --write-out "%{http_code}" --silent --output /dev/null http://localhost:8080', returnStdout: true).trim()
-                    if (response == "200") {
-                        echo 'The app is running successfully!'
-                    } else {
-                        echo "The app failed to start. HTTP response code: ${response}"
-                        currentBuild.result = 'FAILURE'
-                        error("The app did not start correctly!")
-                    }
-                }
-            }
-        }
-
-        stage('Wait for 5 minutes') {
-            steps {
-                echo 'Waiting for 5 minutes...'
-                sleep(time: 1, unit: 'MINUTES')  // Wait for 5 minutes
+                 script {
+                   pipelineAll.validateApp()
+                 }
             }
         }
 
         stage('Gracefully Stop Spring Boot App') {
             steps {
-                echo 'Gracefully stopping the Spring Boot application...'
-                sh 'mvn spring-boot:stop'
+                 script {
+                   pipelineAll.stopApplication()
+                 }
             }
         }
     }
 
     post {
         always {
-            echo 'Cleaning up...'
-            // Any cleanup steps, like stopping the app or cleaning up the environment
-            sh 'pkill -f "mvn spring-boot:run" || true' // Ensure the app is stopped
+             script {
+                   pipelineAll.cleanup()
+             }
         }
     }
 }
