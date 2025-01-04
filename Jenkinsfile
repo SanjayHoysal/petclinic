@@ -46,23 +46,7 @@ pipeline {
                  }
             }
         }
-        // stage('Configure Git') {
-        //     steps {
-        //         script {
-        //             // Set global Git user.name and user.email
-        //             sh 'git config --global user.name "SanjanaKrishn"'
-        //             sh 'git config --global user.email "sanjanabn6@gmail.com"'
-        //         }
-        //     }
-        // }
-        // stage('Tag Build') {
-        //     steps {
-        //         script {
-        //             def buildTag = "build-${env.BUILD_NUMBER}"
-        //             tagBuild(buildTag, "Tagging build number ${env.BUILD_NUMBER}")
-        //         }
-        //     }
-        // }
+    
         stage('Upload Artifact') {
             steps {
                  script {
