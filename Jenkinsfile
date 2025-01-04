@@ -2,7 +2,7 @@
 @Library('my-shared-library@main') _  // Correct syntax
 
 pipeline {
-    agent { label 'Node3' }
+    agent any
     // triggers {
     //     // Trigger at midnight every day
     //     cron('*/2 * * * *')
